@@ -1,8 +1,9 @@
-{
+/{
+  "functions": {
+    "runtime": "nodejs18.x",
+    "directory": "edge-functions"
+  },
   "rewrites": [
-    {
-      "source": "/api/update",
-      "destination": "/api/update.js"
-    }
+    { "source": "/api/update", "destination": "/api/update" }
   ]
 }
