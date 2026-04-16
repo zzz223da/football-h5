@@ -110,7 +110,9 @@
 <div class="modal" id="detailModal"><div class="modal-content"><div class="modal-header"><h3>比赛详情</h3><span class="close-btn" onclick="closeModal()">✕</span></div><div id="modalBody"></div></div></div>
 <button class="refresh-btn" id="refreshBtn">🔄</button>
 <script>
-    const UPDATE_SECRET = '123456789';
+    // ========== 配置 ==========
+    const UPDATE_SECRET = '123456789';  // 请确保与 EdgeOne 环境变量中的 UPDATE_SECRET 一致
+
     let appData = null;
     let currentTab = 'home';
     let searchKeyword = '';
@@ -130,7 +132,7 @@
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
-    // 刷新数据
+    // 刷新按钮（修复 URL 编码）
     document.getElementById('refreshBtn').addEventListener('click', async () => {
         if (!confirm('确定刷新数据？可能需要几秒钟。')) return;
         const btn = document.getElementById('refreshBtn');
@@ -138,12 +140,23 @@
         btn.disabled = true;
         btn.innerText = '⏳';
         try {
-            const res = await fetch(`/api/update?token=${encodeURIComponent(UPDATE_SECRET)}`);
+            // 正确拼接 URL，并对 token 进行编码
+            const url = `/api/update?token=${encodeURIComponent(UPDATE_SECRET)}`;
+            const res = await fetch(url);
             const data = await res.json();
-            if (data.success) { alert('数据更新成功！'); location.reload(true); }
-            else { alert('更新失败：' + (data.error || '未知错误')); }
-        } catch (err) { alert('请求失败：' + err.message); }
-        finally { btn.style.opacity = '1'; btn.disabled = false; btn.innerText = '🔄'; }
+            if (data.success) {
+                alert('数据更新成功！页面将重新加载。');
+                location.reload(true);
+            } else {
+                alert('更新失败：' + (data.error || '未知错误'));
+            }
+        } catch (err) {
+            alert('请求失败：' + err.message);
+        } finally {
+            btn.style.opacity = '1';
+            btn.disabled = false;
+            btn.innerText = '🔄';
+        }
     });
 
     window.switchTab = function(tabId) {
@@ -157,24 +170,12 @@
         if (tabId === 'profile' && appData) renderProfilePage();
     };
 
-    window.subscribeNotify = function() {
-        const userId = prompt('请输入您的 Telegram 用户 ID（可从 @userinfobot 获取）');
-        if (userId) {
-            fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({userId}) })
-                .then(r => r.json()).then(d => alert(d.success ? '订阅成功！' : '订阅失败'));
-        }
-    };
-
+    window.subscribeNotify = () => alert('推送功能开发中，敬请期待！');
     window.showAbout = () => alert('122 足球预测系统\n版本 3.0\n基于泊松模型+多因子融合');
-
     window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
-
     window.shareApp = () => {
-        if (navigator.share) {
-            navigator.share({ title: '122足球预测', url: window.location.href });
-        } else {
-            prompt('复制链接分享', window.location.href);
-        }
+        if (navigator.share) navigator.share({ title: '122足球预测', url: location.href });
+        else prompt('复制链接分享', location.href);
     };
 
     async function loadData() {
