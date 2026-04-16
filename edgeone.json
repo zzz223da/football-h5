@@ -1,4 +1,4 @@
-/{
+{
   "functions": {
     "runtime": "nodejs18.x",
     "directory": "edge-functions"
