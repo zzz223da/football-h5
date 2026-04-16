@@ -1,6 +1,9 @@
-{
-  "name": "football-h5",
-  "version": "1.0.0",
-  "scripts": { "update": "node update.js" },
-  "dependencies": { "node-fetch": "^2.6.9" }
+/{
+  "functions": {
+    "runtime": "nodejs18.x",
+    "directory": "edge-functions"
+  },
+  "rewrites": [
+    { "source": "/api/update", "destination": "/api/update" }
+  ]
 }
