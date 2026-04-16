@@ -1,9 +1,12 @@
-/{
-  "functions": {
-    "runtime": "nodejs18.x",
-    "directory": "edge-functions"
+{
+  "name": "football-h5",
+  "version": "1.0.0",
+  "description": "122足球预测系统",
+  "main": "update.js",
+  "scripts": {
+    "update": "node update.js"
   },
-  "rewrites": [
-    { "source": "/api/update", "destination": "/api/update" }
-  ]
+  "dependencies": {
+    "node-fetch": "^2.6.9"
+  }
 }
