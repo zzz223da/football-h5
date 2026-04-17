@@ -1,5 +1,0 @@
-{
-  "crons": [
-    { "path": "/api/update?token=${UPDATE_SECRET}", "schedule": "0 22 * * *" }
-  ]
-}
