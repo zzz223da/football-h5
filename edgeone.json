@@ -4,6 +4,25 @@
     "directory": "edge-functions"
   },
   "rewrites": [
-    { "source": "/api/update", "destination": "/api/update" }
+    {
+      "source": "/api/update",
+      "destination": "/api/update"
+    },
+    {
+      "source": "/api/backtest",
+      "destination": "/api/backtest"
+    },
+    {
+      "source": "/api/get-config",
+      "destination": "/api/get-config"
+    },
+    {
+      "source": "/api/set-config",
+      "destination": "/api/set-config"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin"
+    }
   ]
 }
