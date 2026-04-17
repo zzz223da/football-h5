@@ -1,6 +1,6 @@
 // edge-functions/api/update.js
-// V9.25 全闭环终极版
-// 功能：动态超参 + 全局/联赛双配置 + 可视化后台 + 完整回测系统 + Optuna对接 + ELO迭代 + 三套独立权重
+// V9.25 全闭环终极版 | EdgeOne KV 兼容修复版
+// 功能：动态超参 + 全局/联赛双配置 + 可视化后台 + 完整回测 + Optuna对接 + ELO迭代 + 三套独立权重
 const UPDATE_SECRET = process.env.UPDATE_SECRET || '123456789';
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY || '';
 const ODDS_API_KEY = process.env.ODDS_API_KEY || '';
@@ -115,19 +115,34 @@ async function safeFetch(url, options = {}, timeout = 8000) {
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, { ...options, signal: controller.signal });
+    if (!res.ok) return null;
     return await res.json();
-  } catch { return null; } finally { clearTimeout(timer); }
+  } catch (e) { 
+    return null; 
+  } finally { 
+    clearTimeout(timer); 
+  }
 }
 async function fetchFixtures(leagueId, date) {
   if (!FOOTBALL_API_KEY) return [];
   const url = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2026&date=${date}`;
-  const data = await safeFetch(url, {headers:{'x-rapidapi-key':FOOTBALL_API_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}});
+  const data = await safeFetch(url, {
+    headers:{
+      'x-rapidapi-key':FOOTBALL_API_KEY,
+      'x-rapidapi-host':'v3.football.api-sports.io'
+    }
+  });
   return data?.response || [];
 }
 async function fetchFinishedFixtures(leagueId, date) {
   if (!FOOTBALL_API_KEY) return [];
   const url = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2026&date=${date}&status=FT`;
-  const data = await safeFetch(url, {headers:{'x-rapidapi-key':FOOTBALL_API_KEY,'x-rapidapi-host':'v3.football.api-sports.io'}});
+  const data = await safeFetch(url, {
+    headers:{
+      'x-rapidapi-key':FOOTBALL_API_KEY,
+      'x-rapidapi-host':'v3.football.api-sports.io'
+    }
+  });
   return data?.response || [];
 }
 async function fetchOdds(homeTeam, awayTeam) {
@@ -139,11 +154,11 @@ async function fetchOdds(homeTeam, awayTeam) {
       const h2h = g.bookmakers?.[0]?.markets?.find(m => m.key === 'h2h');
       const ou = g.bookmakers?.[0]?.markets?.find(m => m.key === 'over_under_2_5');
       return {
-        home: h2h?.outcomes.find(o=>o.name===homeTeam)?.price||2.2,
-        draw: h2h?.outcomes.find(o=>o.name==='Draw')?.price||3.3,
-        away: h2h?.outcomes.find(o=>o.name===awayTeam)?.price||3.4,
-        over25: ou?.outcomes.find(o=>o.name==='Over 2.5')?.price||1.9,
-        under25: ou?.outcomes.find(o=>o.name==='Under 2.5')?.price||1.9
+        home: h2h?.outcomes?.find(o=>o.name===homeTeam)?.price||2.2,
+        draw: h2h?.outcomes?.find(o=>o.name==='Draw')?.price||3.3,
+        away: h2h?.outcomes?.find(o=>o.name===awayTeam)?.price||3.4,
+        over25: ou?.outcomes?.find(o=>o.name==='Over 2.5')?.price||1.9,
+        under25: ou?.outcomes?.find(o=>o.name==='Under 2.5')?.price||1.9
       };
     }
   }
@@ -371,12 +386,12 @@ async function getAll(){
   document.getElementById('elok').value = globalCfg.eloK;
 
   const bt = await (await fetch('/api/backtest?token='+token)).json();
-  document.getElementById('backtestBox').innerHTML = `
-  <p>统计日期：${bt.date}</p>
-  <p>总场次：${bt.totalMatch} | 1X2命中率：${bt.hit1X2}%</p>
-  <p>大小球命中率：${bt.hitOU}% | 模拟ROI：${bt.simROI}%</p>
-  <p>综合MAE误差：${(Number(bt.mae1X2)+Number(bt.maeOU)).toFixed(3)}</p>
-  `;
+  document.getElementById('backtestBox').innerHTML = \`
+  <p>统计日期：\${bt.date}</p>
+  <p>总场次：\${bt.totalMatch} | 1X2命中率：\${bt.hit1X2}%</p>
+  <p>大小球命中率：\${bt.hitOU}% | 模拟ROI：\${bt.simROI}%</p>
+  <p>综合MAE误差：\${(Number(bt.mae1X2)+Number(bt.maeOU)).toFixed(3)}</p>
+  \`;
   loadLeagueCfg();
 }
 function loadLeagueCfg(){
@@ -391,7 +406,11 @@ async function saveGlobal(){
     weight1X2:Number(w1x2.value),weightOU:Number(wou.value),
     negBinomialR:Number(r.value),dcRho:Number(rho.value),eloK:Number(elok.value)
   }};
-  await fetch('/api/set-config?token='+token,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}});
+  await fetch('/api/set-config?token='+token,{
+    method:'POST',
+    body:JSON.stringify(payload),
+    headers:{'Content-Type':'application/json'}
+  });
   alert('全局参数保存成功');
 }
 async function saveLeague(){
@@ -402,7 +421,11 @@ async function saveLeague(){
     lambdaHomeBase:lgLam.value?Number(lgLam.value):undefined
   };
   const payload = {league:leagueCfg};
-  await fetch('/api/set-config?token='+token,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}});
+  await fetch('/api/set-config?token='+token,{
+    method:'POST',
+    body:JSON.stringify(payload),
+    headers:{'Content-Type':'application/json'}
+  });
   alert('联赛参数保存成功');
 }
 async function freshData(){
@@ -479,11 +502,13 @@ const htmlPage = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// ===================== 9. 路由入口 =====================
+// ===================== 9. 路由入口 & EdgeOne KV 兼容修复 =====================
 export default async (req) => {
   const url = new URL(req.url);
   const path = url.pathname;
-  const kv = globalThis?.DATA_KV || null;
+  // 修复EdgeOne KV全局变量兼容
+  const kv = typeof DATA_KV !== 'undefined' ? DATA_KV : null;
+
   const corsHeaders = {
     'Access-Control-Allow-Origin':'*',
     'Content-Type':'application/json; charset=utf-8'
@@ -521,9 +546,11 @@ export default async (req) => {
     const token = url.searchParams.get('token');
     if(token !== UPDATE_SECRET) return new Response(JSON.stringify({error:'无权限'}),{status:403,headers:corsHeaders});
     const body = await req.json();
-    if(kv){
-      await kv.put('global_v925',JSON.stringify({...DEFAULT_GLOBAL_CONFIG,...body.global}));
-      await kv.put('league_v925',JSON.stringify({...DEFAULT_LEAGUE_CONFIG,...body.league}));
+    if(kv && body.global){
+      await kv.put('global_v925',JSON.stringify(Object.assign({}, DEFAULT_GLOBAL_CONFIG, body.global)));
+    }
+    if(kv && body.league){
+      await kv.put('league_v925',JSON.stringify(Object.assign({}, DEFAULT_LEAGUE_CONFIG, body.league)));
     }
     return new Response(JSON.stringify({success:true}),{headers:corsHeaders});
   }
@@ -532,14 +559,16 @@ export default async (req) => {
   if(path === '/api/update'){
     const token = url.searchParams.get('token')||req.headers.get('x-auth-token');
     if(token !== UPDATE_SECRET) return new Response(JSON.stringify({error:'无权限'}),{status:403,headers:corsHeaders});
-    let globalCfg = await kv?.get('global_v925','json') || DEFAULT_GLOBAL_CONFIG;
-    let leagueCfg = await kv?.get('league_v925','json') || DEFAULT_LEAGUE_CONFIG;
-    let eloDB = await kv?.get('elo_v925','json') || DEFAULT_ELO;
+    let globalCfg = kv ? await kv.get('global_v925','json') : DEFAULT_GLOBAL_CONFIG;
+    let leagueCfg = kv ? await kv.get('league_v925','json') : DEFAULT_LEAGUE_CONFIG;
+    let eloDB = kv ? await kv.get('elo_v925','json') : DEFAULT_ELO;
     const data = await generateData(eloDB, globalCfg, leagueCfg);
     if(kv){
       await kv.put('match_v925',JSON.stringify(data));
       await kv.put('elo_v925',JSON.stringify(data.matches.reduce((o,m)=>{
-        o[m.homeTeam]=m.homeElo;o[m.awayTeam]=m.awayElo;return o;
+        o[m.homeTeam]=m.homeElo;
+        o[m.awayTeam]=m.awayElo;
+        return o;
       },{})));
     }
     return new Response(JSON.stringify({success:true,count:data.matches.length}),{headers:corsHeaders});
@@ -547,7 +576,7 @@ export default async (req) => {
 
   // 赛事数据
   if(path === '/data.json'){
-    let data = await kv?.get('match_v925','json');
+    let data = kv ? await kv.get('match_v925','json') : null;
     if(!data){
       data = await generateData(DEFAULT_ELO, DEFAULT_GLOBAL_CONFIG, DEFAULT_LEAGUE_CONFIG);
     }
